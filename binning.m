@@ -20,7 +20,7 @@
 function [event_count, bin_centers] = binning(datapoints, bin_size)
 
     max_datapoint         = max(datapoints);
-    bins                  = 0:bin_size:max_datapoint;
+    bins                  = 0:bin_size:max_datapoint+bin_size;
     bin_centers           = bins(1:end-1) + bin_size/2;
     event_count           = zeros(length(bins),1); 
 

@@ -3,7 +3,7 @@ clc; clear; close all;
 % definition of mer recording
 fs        = 24000;     % sampling frequency
 dt        = 1 / fs;    % time resolution
-bin_size  = 10;        % interval for converting spike time to binary process (ms)
+bin_size  = 1;         % interval for converting spike time to binary process (ms)
 
 % the directory contains patients recording
 base_directory = 'E:\Master Thesis\GPi Besta AK Thesis\Analysis\Paz1';
@@ -37,7 +37,10 @@ for i = 1 : length(filelist)
             spike_train = spiketime_2_spiketrain(spiking_times, bin_size, segment_length);
 
             % calculating isi probability for each interval / bin
-            [isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
+            [isi, isi_per_bin, isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
+            
+            % fitting IG distribution for given isi
+            [mu, lambda, isi_pdf] = isi_fit_inverse_gaussian(isi, bin_centers);
            
             % autocorrelation of spike train
             [acf,lags] = xcorr(spike_train, 'normalized');
@@ -45,20 +48,24 @@ for i = 1 : length(filelist)
             lags       = lags(int32(length(lags))/2:end);
             lags       = (lags * bin_size)';
 
-
             % plotting 
             acf_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ACF.mat');
             isiprob_path_name = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ISIPROB.mat');
             
-            % plot and save the acf of spike train
-            figure; bar(bin_centers, isi_probs);
-            xlabel("ms"); ylabel("probability"); title(strcat("ISI Probabilities(Bin size ", string(bin_size), " ms)"));
-            saveas(gcf, strcat(acf_path_name, '_ISIPROB.png'));
-
             % plot and save the isi probability of spike train
+            figure; bar(bin_centers, isi_probs);
+            hold on;
+            plot(bin_centers, isi_pdf, 'LineWidth', 2);
+            xlabel("ISI [ms]"); ylabel("probability"); 
+            title(strcat("ISI Probabilities (bin size ", string(bin_size), " ms)"));
+            legend('ISI bins', strcat('Fitted Inverse Gaussian Distribution (mu:', string(mu) , ' | lambda:', string(lambda),')'));
+            saveas(gcf, strcat(isiprob_path_name, '_ISIPROB.png'));
+            hold off;
+            
+            % plot and save the acf of spike train            
             figure; stem(lags,acf);
             xlabel("ms"); ylabel("autocorrelation");
-            saveas(gcf, strcat(isiprob_path_name, '_ACF.png'));
+            saveas(gcf, strcat(acf_path_name, '_ACF.png'));
             close all; 
         
             % add all the analysis results to statistic struct
@@ -66,9 +73,12 @@ for i = 1 : length(filelist)
             acf_struct.acf                     = acf;
             isi_probs_struct.bin_centers       = bin_centers;
             isi_probs_struct.isi_probability   = isi_probs;
+            isi_pdf_struct.mu                  = mu;
+            isi_pdf_struct.lambda              = lambda;
             statistics(neuron_count).name      = neuron_name;
             statistics(neuron_count).acf       = acf_struct;
             statistics(neuron_count).isi_probs = isi_probs_struct;
+            statistics(neuron_count).isi_pdf   = isi_pdf_struct;
             
         end
         

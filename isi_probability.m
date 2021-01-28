@@ -18,12 +18,11 @@
 % isi_probability : isi probabilites of each time interval
 % bin_centers     : the center value of each bin (vector)
 %
-function [isi_probability, bin_centers] = isi_probability(spiking_times, bin_size)
+function [isi, isi_per_bin, isi_probability, bin_centers] = isi_probability(spiking_times, bin_size)
 
-    spikes_count                 = length(spiking_times);
-    isi                          = spiking_times(2:end) - spiking_times(1:end-1);
+    isi                          = (spiking_times(2:end) - spiking_times(1:end-1));
     [isi_per_bin, bin_centers]   = binning(isi, bin_size);
-    isi_probability              = isi_per_bin ./ spikes_count;
+    isi_probability              = isi_per_bin ./ length(isi);
     isi_probability              = isi_probability(1:end-1);
     
 end
