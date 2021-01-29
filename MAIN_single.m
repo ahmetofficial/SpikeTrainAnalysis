@@ -6,7 +6,7 @@ dt        = 1 / fs;    % time resolution
 bin_size  = 1;        % interval for converting spike time to binary process (second)
 
 % get the spiking times
-base_directory        = 'E:\Master Thesis\GPi Besta AK Thesis\Analysis\Paz3\GPI sx\anteriore\Results\Std Min Threshold = 4\-4 mm (detected)\times_00000106_01_01_5_0012_-04000.mat';
+base_directory        = 'E:\Master Thesis\GPi Besta AK Thesis\Analysis\Paz1\GPI dx\anteriore\+0 mm (detected)\times_00000122_02_01_5_0012_+00000.mat';
 [sua, segment_length] = get_spiking_times(base_directory);
 spiking_times         = sua(1).spiking_times;  % in seconds
 N                     = length(spiking_times);
@@ -26,12 +26,4 @@ figure; bar(bin_centers, isi_probs);
         legend('ISI bins', strcat('Fitted Inverse Gaussian Distribution (mu:', string(mu) , ' | lambda:', string(lambda),')'));
         hold off;
         
-kstest(isi_pdf, isi_probs, length(isi));
-
-
-ime  = 0:dt:10;
-time  = time(1:end-1)';
-alpha = lambda;
-beta  = mu;
-
-% [firing_rate, h]      = BAKS(spiking_times, time, alpha, beta);
+ks_result = kstest(isi_pdf, isi_probs, length(isi));
