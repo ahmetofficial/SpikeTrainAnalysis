@@ -4,7 +4,7 @@ clc; clear; close all;
 % definition of mer recording
 fs        = 24000;      % sampling frequency
 dt        = 1 / fs;     % time resolution
-bin_size  = 5;         % interval for converting spike time to binary process (in ms)
+bin_size  = 0.010;      % interval for converting spike time to binary process (in seconds)
 
 %% SORTED NEURONS DIRECTORY
 % the directory contains patients recording
@@ -37,26 +37,20 @@ for i = 1 : length(filelist)
 
             % get the sorted neurons spiking activity
             neuron_name   = sua(neuron_count).neuron;
-            spiking_times = sua(neuron_count).spiking_times;            % in seconds
+            spiking_times = sua(neuron_count).spiking_times ./ 1000;    % in seconds
             N             = length(spiking_times);                      % number of spikes
-            time_vector   = 0: (bin_size/1000): (segment_length-bin_size)/1000;
+            time_vector   = 0: bin_size: segment_length-bin_size;
 
             % converting spike times to binary spike train with a specific interval
             spike_train = spiketime_2_spiketrain(spiking_times, bin_size, segment_length);
             
-            % raster plot
-            raster_path_name = strcat(file_path, '\', file_name_we, '_', neuron_name, '_raster.png');
-            rp_figure        = raster_plot(spike_train', time_vector, bin_size);    
-            saveas(gcf, raster_path_name);
-            hold off;
-
             % -------------------------------------------------------------
             % ISI ---------------------------------------------------------
             % -------------------------------------------------------------
             
             % calculating isi probability for each interval / bin
             [isi, isi_per_bin, isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
-            
+                
             % fitting IG distribution for given isi
             [mu, lambda, isi_pdf] = isi_fit_inverse_gaussian(isi, bin_centers);
             
@@ -78,21 +72,26 @@ for i = 1 : length(filelist)
             % PLOTS -------------------------------------------------------
             % -------------------------------------------------------------
             
-            % plotting 
             acf_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ACF.png');
             isiprob_path_name = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ISIPROB.png');
+            raster_path_name  = strcat(file_path, '\', file_name_we, '_', neuron_name, '_raster.png');
             
-            % plot and save the isi probability of spike train
+            % raster plot
+            rp_figure = raster_plot(spike_train', time_vector, bin_size);    
+            saveas(gcf, raster_path_name);
+            hold off;
+
+            % isi probability plot
             figure; bar(bin_centers, isi_probs);
             hold on;
             plot(bin_centers, isi_pdf, 'LineWidth', 2);
-            xlabel("ISI [ms]"); ylabel("probability"); 
-            title(strcat("ISI Probabilities (bin size ", string(bin_size), " ms)"));
+            xlabel("ISI [second]"); ylabel("probability"); 
+            title(strcat("ISI Probabilities (bin size ", string(bin_size), " seconds)"));
             legend('ISI bins', strcat('Fitted Inverse Gaussian Distribution (mu:', string(mu) , ' | lambda:', string(lambda),')'));
             saveas(gcf, isiprob_path_name);
             hold off;
             
-            % plot and save the acf of spike train            
+            % acf of spike train            
             figure; stem(lags,acf);
             xlabel("ms"); ylabel("autocorrelation");
             saveas(gcf, acf_path_name);

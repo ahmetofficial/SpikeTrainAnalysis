@@ -30,14 +30,11 @@ firing_pattern = get_firing_pattern(spiking_times, N-1);
 firing_rate    = firing_pattern(1);
 firing_rate_mean = mean(ins_firing_rate);
 
+co
 
 
 % find isi and isi probabilities
 [isi, isi_per_bin, isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
-
-cv = coefficient_of_variation(isi);
-lv = local_variation(isi);
-
 % [mu, lambda, isi_pdf]                      = isi_fit_inverse_gaussian(isi, bin_centers);
 % 
 % figure; bar(bin_centers, isi_probs);

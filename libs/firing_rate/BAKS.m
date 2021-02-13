@@ -12,7 +12,7 @@
 % spiking_times : spike event times [nSpikes x 1]
 % Time          : time at which the firing rate is estimated [nTime x 1]
 % a             : shape parameter (alpha) 
-% b             : scale paramter (beta)
+% b             : scale parameter (beta)
 %
 %% %%%%%%%%%%%%%%%%%%%%%%%%% OUTPUT PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

@@ -23,11 +23,11 @@ function [sua, segment_length] = get_spiking_times(path)
     neurons = unique(spikes(:,1)); % determined neurons after spike sorting [1,2,3...]
     neurons = neurons(neurons~=0); % 0 represent the rejected spiking activity
     
-    for i = 1:length(neurons)
+    for i = 1:length(neurons)      % putting spiking times of different neurons in separate arrays
         neuron_index         = neurons(i);
         neuron_spikes        = spikes(spikes(:,1)==neuron_index,:);
         sua(i).neuron        = strcat('neuron', string(i));
         sua(i).spiking_times = neuron_spikes(:,2);
     end
-    segment_length = ceil(cluster_class(end,2)/1000) * 1000;
+    segment_length = ceil(cluster_class(end,2)/1000);
 end

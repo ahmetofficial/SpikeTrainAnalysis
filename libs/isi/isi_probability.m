@@ -10,8 +10,8 @@
 %
 %% %%%%%%%%%%%%%%%%%%%%%%%%% INPUT PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
-% spiking_times   : vector contains spiking times 0< t1,t2,...,tn <T
-% bin_size        : the size of each bin (integer)
+% spiking_times   : vector contains spiking times 0< t1,...,tn <T in second
+% bin_size        : the size of each bin (in seconds)
 % 
 %% %%%%%%%%%%%%%%%%%%%%%%%%% OUTPUT PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

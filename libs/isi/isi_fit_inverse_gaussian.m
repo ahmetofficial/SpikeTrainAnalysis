@@ -25,6 +25,7 @@
 %
 function [mu, lambda, isi_pdf] = isi_fit_inverse_gaussian(isi, bin_centers)
 
+    isi       = isi .* 1000;
     mu        = mean(isi);
     lambda    = 1 / mean((1./isi) - (1./mu));
     isi_pdf   = zeros(length(bin_centers),1);
