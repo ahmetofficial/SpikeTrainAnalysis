@@ -42,7 +42,7 @@ for i = 1 : length(filelist)
             time_vector   = 0: bin_size: segment_length-bin_size;
 
             % converting spike times to binary spike train with a specific interval
-            spike_train = spiketime_2_spiketrain(spiking_times, bin_size, segment_length);
+            spike_train   = spiketime_2_spiketrain(spiking_times, bin_size, segment_length);
             
             % -------------------------------------------------------------
             % INSTANTENOUS FIRING RATE ------------------------------------
@@ -59,21 +59,29 @@ for i = 1 : length(filelist)
             
             % calculating isi probability for each interval / bin
             [isi, isi_per_bin, isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
-            
-            % get firing rate and 
-            firing_pattern    = get_firing_pattern(spiking_times, length(isi)-1);
-            firing_rate       = firing_pattern(1);                % calculated firing rate
-            firing_regularity = firing_pattern(2);                % firing regularity
-            isi_rho           = firing_pattern(3);                % isi autocorr rho
-            
-            lv                = local_variation(isi);             % local variation metric
-            cv                = coefficient_of_variation(isi);    % coefficient of variation metric
-            shape_param       = exp(firing_regularity);           % shape parameter of fitted gamma dist
-            scale_param       = 1/(exp(firing_rate)*shape_param); % scale parameter of fitted gamma dist
-            
-            isi_pdf = makedist('Gamma', 'a', shape_param, 'b', scale_param);
-            isi_pdf = pdf(isi_pdf, bin_centers);
 
+            % get firing rate and 
+            firing_pattern    = get_firing_pattern(spiking_times, N-1);
+            firing_rate       = firing_pattern(1);                 % calculated firing rate
+            firing_regularity = firing_pattern(2);                 % firing regularity
+            isi_rho           = firing_pattern(3);                 % isi autocorr rho
+            
+            lv                = local_variation(isi);              % local variation metric
+            cv                = coefficient_of_variation(isi);     % coefficient of variation metric
+            shape_param       = exp(firing_regularity);            % shape parameter of fitted gamma dist
+            scale_param       = 1/(exp(firing_rate)*shape_param);  % scale parameter of fitted gamma dist
+
+            isi_mean          = shape_param * scale_param;         % mean of isi distribution
+            isi_std           = sqrt(shape_param * scale_param^2); % std of isi distribution
+            isi_skewness      = 2 / sqrt(shape_param);             % skewness of isi distribution
+            
+            % fit bin centers according to fitted gamma dist for KS test
+            isi_dist  = makedist('Gamma', 'a', shape_param, 'b', scale_param);
+            isi_pdf   = pdf(isi_dist, bin_centers);
+
+            % matlab KS test
+            [ks_h, p]   = kstest(isi,'CDF',isi_dist,'Alpha',0.05);
+            
             % -------------------------------------------------------------
             % ACF ---------------------------------------------------------
             % -------------------------------------------------------------
@@ -92,6 +100,7 @@ for i = 1 : length(filelist)
             isiprob_path_name = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ISIPROB.png');
             raster_path_name  = strcat(file_path, '\', file_name_we, '_', neuron_name, '_raster.png');
             ifr_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_IFR.png');
+            ks_path_name      = strcat(file_path, '\', file_name_we, '_', neuron_name, '_KS.png');
             
             % raster plot
             rp_figure = raster_plot(spike_train', time_vector, bin_size);    
@@ -101,6 +110,11 @@ for i = 1 : length(filelist)
             % firing rate plot
             ifr_figure = firing_rate_plot(spike_train', time_vector, bin_size, ins_firing_rate);
             saveas(gcf, ifr_path_name);
+            hold off;
+            
+            % Kolmogorov-Smirnov plot
+            [h, ks_figure] = kolmogorov_smirnov_test(isi_pdf, isi_probs, length(isi));     
+            saveas(gcf, ks_path_name);
             hold off;
             
             % isi probability plot
@@ -136,8 +150,12 @@ for i = 1 : length(filelist)
             acf_struct.acf                     = acf;
             isi_probs_struct.bin_centers       = bin_centers;
             isi_probs_struct.isi_probability   = isi_probs;
+            isi_pdf_struct.ks_h                = h;
             isi_pdf_struct.scale_param         = scale_param;
             isi_pdf_struct.shape_parap         = shape_param;
+            isi_pdf_struct.mean                = isi_mean;
+            isi_pdf_struct.std                 = isi_std;
+            isi_pdf_struct.skewness            = isi_skewness;
             statistics(neuron_count).name      = neuron_name;
             statistics(neuron_count).chars     = characteristics_struct;
             statistics(neuron_count).acf       = acf_struct;

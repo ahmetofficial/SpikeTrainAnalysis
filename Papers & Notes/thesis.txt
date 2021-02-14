@@ -1,0 +1,29 @@
+For each depth of each patient compute:
+1) ISI distribution
+2) mean/median of the distribution
+3) CV of the di
+4) shape factor from gamma fit of the di
+
+For each patient, and for each of the 2-4 features
+Plot across depths
+Depending on the plot
+monotonic-> correlation pearson
+non monotonic-> identify minima maxima
+
+Population level analysis
+align all the patients
+for each feature 2-4 ad each depth you consider different patients as different outcomes of the same process
+
+you get a NOVEL "average distribution across depths" of each feature
+
+with this novel distribution you can do statistical test
+significance of inter-depth differences
+
+you take the feature describing the distribution of each patient separately and you check if they are similar
+ex:
+
+are all the minima of the distribution of CV across depths at the same depth?
+
+
+https://github.com/vncntprvst/tools/blob/master/Gdatatheor/psautospk.m
+
