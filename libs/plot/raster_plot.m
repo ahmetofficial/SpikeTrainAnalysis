@@ -12,7 +12,7 @@ function [fig] = raster_plot (spike_train_matrix, time_vector, bin_size)
     end
     
     ylim ([0 (size(spike_train_matrix,1)+1)]);
-    title(strcat("raster plot [", string(bin_size), " seconds bin size]"));
+    title(strcat("raster plot (", string(bin_size), " seconds bin size)"));
     ylabel("trials"); xlabel("time [seconds]");
    
 end

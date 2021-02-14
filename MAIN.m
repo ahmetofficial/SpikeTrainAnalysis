@@ -45,19 +45,35 @@ for i = 1 : length(filelist)
             spike_train = spiketime_2_spiketrain(spiking_times, bin_size, segment_length);
             
             % -------------------------------------------------------------
+            % INSTANTENOUS FIRING RATE ------------------------------------
+            % -------------------------------------------------------------
+            
+            alpha = 4;
+            beta  = N ^ (4/5);
+            % getting instantenous firing rate
+            [ins_firing_rate, h] = BAKS(spiking_times, time_vector', alpha, beta);
+            
+            % -------------------------------------------------------------
             % ISI ---------------------------------------------------------
             % -------------------------------------------------------------
             
             % calculating isi probability for each interval / bin
             [isi, isi_per_bin, isi_probs, bin_centers] = isi_probability(spiking_times, bin_size);
-                
-            % fitting IG distribution for given isi
-            [mu, lambda, isi_pdf] = isi_fit_inverse_gaussian(isi, bin_centers);
             
-            % plotting KS graph to see the goodness of fit
-            ks_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_KS.png');
-            ks_result        = kstest(isi_pdf, isi_probs, length(isi), ks_path_name);
+            % get firing rate and 
+            firing_pattern    = get_firing_pattern(spiking_times, length(isi)-1);
+            firing_rate       = firing_pattern(1);                % calculated firing rate
+            firing_regularity = firing_pattern(2);                % firing regularity
+            isi_rho           = firing_pattern(3);                % isi autocorr rho
             
+            lv                = local_variation(isi);             % local variation metric
+            cv                = coefficient_of_variation(isi);    % coefficient of variation metric
+            shape_param       = exp(firing_regularity);           % shape parameter of fitted gamma dist
+            scale_param       = 1/(exp(firing_rate)*shape_param); % scale parameter of fitted gamma dist
+            
+            isi_pdf = makedist('Gamma', 'a', shape_param, 'b', scale_param);
+            isi_pdf = pdf(isi_pdf, bin_centers);
+
             % -------------------------------------------------------------
             % ACF ---------------------------------------------------------
             % -------------------------------------------------------------
@@ -75,25 +91,33 @@ for i = 1 : length(filelist)
             acf_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ACF.png');
             isiprob_path_name = strcat(file_path, '\', file_name_we, '_', neuron_name, '_ISIPROB.png');
             raster_path_name  = strcat(file_path, '\', file_name_we, '_', neuron_name, '_raster.png');
+            ifr_path_name     = strcat(file_path, '\', file_name_we, '_', neuron_name, '_IFR.png');
             
             % raster plot
             rp_figure = raster_plot(spike_train', time_vector, bin_size);    
             saveas(gcf, raster_path_name);
             hold off;
-
+            
+            % firing rate plot
+            ifr_figure = firing_rate_plot(spike_train', time_vector, bin_size, ins_firing_rate);
+            saveas(gcf, ifr_path_name);
+            hold off;
+            
             % isi probability plot
-            figure; bar(bin_centers, isi_probs);
+            figure; bar(bin_centers, isi_probs.*100 , 'b');
             hold on;
-            plot(bin_centers, isi_pdf, 'LineWidth', 2);
-            xlabel("ISI [second]"); ylabel("probability"); 
+            plot(bin_centers, isi_pdf, 'LineWidth', 2 , 'color', 'r');
+            xlabel("ISI [second]"); ylabel("probability [percentage]"); 
             title(strcat("ISI Probabilities (bin size ", string(bin_size), " seconds)"));
-            legend('ISI bins', strcat('Fitted Inverse Gaussian Distribution (mu:', string(mu) , ' | lambda:', string(lambda),')'));
+            legend('ISI bins', strcat('Fitted Gamma Distribution (shape:', string(shape_param),...
+                                      ' | scale:', string(scale_param),')'));
             saveas(gcf, isiprob_path_name);
             hold off;
             
             % acf of spike train            
             figure; stem(lags,acf);
-            xlabel("ms"); ylabel("autocorrelation");
+            xlabel("time [seconds]"); ylabel("autocorrelation");
+            title(strcat("Autocorrelogram (bin size ", string(bin_size), " seconds)"));
             saveas(gcf, acf_path_name);
             close all; 
         
@@ -102,13 +126,20 @@ for i = 1 : length(filelist)
             % -------------------------------------------------------------
             
             % add all the analysis results to statistic struct
+            characteristics_struct.fr          = firing_rate;
+            characteristics_struct.regularity  = firing_regularity;
+            characteristics_struct.ifr         = ins_firing_rate;
+            characteristics_struct.isi_rho     = isi_rho;
+            characteristics_struct.cv          = cv;
+            characteristics_struct.lv          = lv;
             acf_struct.lags                    = lags;
             acf_struct.acf                     = acf;
             isi_probs_struct.bin_centers       = bin_centers;
             isi_probs_struct.isi_probability   = isi_probs;
-            isi_pdf_struct.mu                  = mu;
-            isi_pdf_struct.lambda              = lambda;
+            isi_pdf_struct.scale_param         = scale_param;
+            isi_pdf_struct.shape_parap         = shape_param;
             statistics(neuron_count).name      = neuron_name;
+            statistics(neuron_count).chars     = characteristics_struct;
             statistics(neuron_count).acf       = acf_struct;
             statistics(neuron_count).isi_probs = isi_probs_struct;
             statistics(neuron_count).isi_pdf   = isi_pdf_struct;

@@ -11,7 +11,7 @@ function [fig] = firing_rate_plot (spike_train_matrix, time_vector, bin_size, fi
         end
     end
     
-    title(strcat("instantenous firing rate [", string(bin_size), " seconds bin size]"));
+    title(strcat("instantenous firing rate (", string(bin_size), " seconds bin size)"));
     ylabel("frequency [Hz]"); xlabel("time [seconds]");
     hold on; 
     plot(time_vector, firing_rate, 'r');
